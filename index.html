@@ -1,0 +1,2519 @@
+<!doctype html>
+<html lang="tr">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agrolink - API Bağlantılı Platform</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fafafa;
+      height: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Splash Screen */
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 3s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .splash-content {
+      text-align: center;
+      animation: fadeInScale 1s ease;
+    }
+
+    @keyframes fadeInScale {
+      0% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .loading-circle {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 30px;
+      transform: rotate(-90deg);
+    }
+
+    .loading-circle-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.2);
+      stroke-width: 8;
+    }
+
+    .loading-circle-progress {
+      fill: none;
+      stroke: white;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      animation: fillCircle 5s ease-in-out forwards;
+    }
+
+    @keyframes fillCircle {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .splash-title {
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: textGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes textGlow {
+      0%, 100% {
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      50% {
+        text-shadow: 0 4px 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.5);
+      }
+    }
+
+    .splash-subtitle {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
+
+    .splash-screen.fade-out {
+      animation: fadeOut 0.5s ease forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      border-bottom: 1px solid #dbdbdb;
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 935px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2d5016;
+      cursor: pointer;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 16px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: #f0f0f0;
+    }
+
+    /* Container */
+    .container {
+      max-width: 935px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 80px;
+    }
+
+    /* Auth Screen */
+    .auth-screen {
+      max-width: 450px;
+      margin: 60px auto;
+      background: white;
+      border: 1px solid #dbdbdb;
+      border-radius: 16px;
+      padding: 40px;
+      display: none;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-screen.active {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .auth-logo {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 700;
+      color: #2d5016;
+      margin-bottom: 10px;
+    }
+
+    .welcome-text {
+      text-align: center;
+      color: #8e8e8e;
+      margin-bottom: 40px;
+      font-size: 15px;
+    }
+
+    .auth-choice {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .auth-choice-btn {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: left;
+    }
+
+    .auth-choice-btn:hover {
+      border-color: #2d5016;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(45, 80, 22, 0.15);
+    }
+
+    .auth-choice-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .auth-choice-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #262626;
+      margin-bottom: 6px;
+    }
+
+    .auth-choice-desc {
+      font-size: 14px;
+      color: #8e8e8e;
+    }
+
+    .auth-form {
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #2d5016;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-4px);
+    }
+
+    .form-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #262626;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .profile-photo-upload {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .profile-photo-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 48px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-photo-preview:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .profile-photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-photo-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 32px;
+    }
+
+    .profile-photo-preview:hover .profile-photo-overlay {
+      opacity: 1;
+    }
+
+    .profile-photo-label {
+      font-size: 14px;
+      color: #8e8e8e;
+      margin-bottom: 8px;
+    }
+
+    .profile-photo-hint {
+      font-size: 12px;
+      color: #0095f6;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .profile-photo-hint:hover {
+      text-decoration: underline;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #2d5016;
+      box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.1);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #2d5016 0%, #3d6820 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(45, 80, 22, 0.4);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      background: #b2dfdb;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Post Card */
+    .post-card {
+      background: white;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .post-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .post-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .username {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .location {
+      font-size: 12px;
+      color: #8e8e8e;
+    }
+
+    .post-image {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      background: #f0f0f0;
+      position: relative;
+    }
+
+    .post-image video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .video-play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: white;
+      pointer-events: none;
+      transition: all 0.3s;
+    }
+
+    .post-image video:not([paused]) + .video-play-overlay {
+      opacity: 0;
+    }
+
+    .video-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .post-actions {
+      padding: 12px 16px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      padding: 4px;
+      transition: transform 0.2s;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .action-btn.liked {
+      animation: heartBeat 0.5s ease;
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.3); }
+      50% { transform: scale(1.1); }
+      75% { transform: scale(1.2); }
+    }
+
+    .post-stats {
+      padding: 0 16px 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .post-caption {
+      padding: 0 16px 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .caption-username {
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    .hashtag {
+      color: #00376b;
+      cursor: pointer;
+    }
+
+    .post-comments {
+      padding: 0 16px 8px;
+    }
+
+    .view-comments {
+      color: #8e8e8e;
+      font-size: 14px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 8px;
+    }
+
+    .comment {
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .comment-username {
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    .post-time {
+      padding: 0 16px 12px;
+      font-size: 10px;
+      color: #8e8e8e;
+      text-transform: uppercase;
+    }
+
+    .comment-input-section {
+      border-top: 1px solid #efefef;
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .comment-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .post-btn {
+      color: #0095f6;
+      font-weight: 600;
+      font-size: 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .post-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #dbdbdb;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 28px;
+      padding: 8px 16px;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-btn span {
+      font-size: 10px;
+      color: #8e8e8e;
+      font-weight: 500;
+    }
+
+    .nav-btn.active {
+      color: #2d5016;
+    }
+
+    .nav-btn.active span {
+      color: #2d5016;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90%;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid #dbdbdb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .emoji-picker {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .emoji-btn {
+      background: #f0f0f0;
+      border: none;
+      font-size: 32px;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .emoji-btn:hover {
+      background: #e0e0e0;
+      transform: scale(1.1);
+    }
+
+    .emoji-btn.selected {
+      background: #2d5016;
+      transform: scale(1.15);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #323232;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 2000;
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #8e8e8e;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2d5016;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Pages */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* Profile Page */
+    .profile-header {
+      background: white;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 30px;
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .profile-avatar-large {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 48px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s;
+      border: 4px solid white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .profile-avatar-large:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 35px rgba(102, 126, 234, 0.3);
+    }
+
+    .profile-avatar-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-username {
+      font-size: 28px;
+      font-weight: 300;
+      margin-bottom: 20px;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 20px;
+    }
+
+    .profile-stat {
+      font-size: 16px;
+    }
+
+    .profile-stat strong {
+      font-weight: 600;
+    }
+
+    /* Market */
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .market-item {
+      background: white;
+      border: 1px solid #dbdbdb;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .market-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .market-item-image {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      background: #f0f0f0;
+    }
+
+    .market-item-info {
+      padding: 16px;
+    }
+
+    .market-item-title {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .market-item-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2d5016;
+      margin-bottom: 8px;
+    }
+
+    .market-item-seller {
+      font-size: 14px;
+      color: #8e8e8e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8e8e8e;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #262626;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+    }
+
+    /* API Info Banner */
+    .api-info-banner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 12px;
+      margin: 20px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .api-info-banner strong {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .api-url-display {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body><!-- Splash Screen -->
+  <div id="splashScreen" class="splash-screen">
+   <div class="splash-content">
+    <svg class="loading-circle" viewbox="0 0 100 100"><circle class="loading-circle-bg" cx="50" cy="50" r="45"></circle> <circle class="loading-circle-progress" cx="50" cy="50" r="45"></circle>
+    </svg>
+    <div class="splash-title">
+     Agrolink
+    </div>
+    <div class="splash-subtitle">
+     Tarım Sosyal Platformu
+    </div>
+   </div>
+  </div><!-- Toast -->
+  <div id="toast" class="toast"></div><!-- Auth Screen -->
+  <div id="authScreen" class="auth-screen">
+   <div class="auth-logo" id="authLogo">
+    🌾 Agrolink
+   </div>
+   <div class="welcome-text" id="welcomeText">
+    Tarım topluluğuna hoş geldiniz
+   </div><!-- Auth Choice -->
+   <div id="authChoice" class="auth-choice"><button class="auth-choice-btn login-btn" id="showLoginBtn">
+     <div class="auth-choice-icon">
+      🔑
+     </div>
+     <div class="auth-choice-title">
+      Giriş Yap
+     </div>
+     <div class="auth-choice-desc">
+      Hesabınız varsa giriş yapın
+     </div></button> <button class="auth-choice-btn register-btn" id="showRegisterBtn">
+     <div class="auth-choice-icon">
+      ✨
+     </div>
+     <div class="auth-choice-title">
+      Kayıt Ol
+     </div>
+     <div class="auth-choice-desc">
+      Yeni hesap oluşturun
+     </div></button>
+   </div><!-- Login Form -->
+   <div id="loginForm" class="auth-form" style="display: none;"><button class="back-btn" id="backFromLogin">← Geri</button>
+    <h2 class="form-title">Giriş Yap</h2>
+    <form id="loginFormSubmit">
+     <div class="form-group"><input type="email" id="loginEmail" class="form-input" placeholder="E-posta" required>
+     </div>
+     <div class="form-group"><input type="password" id="loginPassword" class="form-input" placeholder="Şifre" required>
+     </div><button type="submit" class="submit-btn">Giriş Yap 🚀</button>
+    </form>
+   </div><!-- Register Form -->
+   <div id="registerForm" class="auth-form" style="display: none;"><button class="back-btn" id="backFromRegister">← Geri</button>
+    <h2 class="form-title">Kayıt Ol</h2>
+    <div class="profile-photo-upload">
+     <div class="profile-photo-label">
+      Profil Fotoğrafı (İsteğe Bağlı)
+     </div>
+     <div class="profile-photo-preview" id="profilePhotoPreview"><span id="profilePhotoPlaceholder">📷</span>
+      <div class="profile-photo-overlay">
+       📷
+      </div>
+     </div><input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
+     <div class="profile-photo-hint" id="uploadPhotoBtn">
+      Fotoğraf Yükle
+     </div>
+    </div>
+    <form id="registerFormSubmit">
+     <div class="form-group"><input type="text" id="registerName" class="form-input" placeholder="Adınız Soyadınız" required>
+     </div>
+     <div class="form-group"><input type="email" id="registerEmail" class="form-input" placeholder="E-posta" required>
+     </div>
+     <div class="form-group"><input type="password" id="registerPassword" class="form-input" placeholder="Şifre (min 6 karakter)" required minlength="6">
+     </div><button type="submit" class="submit-btn">Kayıt Ol 🚀</button>
+    </form>
+   </div>
+  </div><!-- Main App -->
+  <div id="mainApp" style="display: none;"><!-- Header -->
+   <div class="header">
+    <div class="header-content">
+     <div class="logo" id="mainLogo">
+      🌾 Agrolink
+     </div>
+     <div class="header-actions"><button class="icon-btn" id="createBtn" title="Paylaş">➕</button> <button class="icon-btn" id="notifBtn" title="Ürün Ekle">🛒</button>
+     </div>
+    </div>
+   </div><!-- Feed Page -->
+   <div id="feedPage" class="page active">
+    <div class="container">
+     <div id="postsContainer">
+      <div class="loading">
+       <div class="spinner"></div>
+       <div>
+        Gönderiler yükleniyor...
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Profile Page -->
+   <div id="profilePage" class="page">
+    <div class="container">
+     <div class="profile-header" style="display: block; text-align: center;">
+      <div class="profile-avatar-large" id="profileAvatar" title="Profil fotoğrafını görüntülemek için tıkla ve basılı tut" style="margin: 0 auto 20px;">
+       U
+      </div>
+      <div class="profile-info" style="text-align: center;">
+       <div class="profile-username" id="profileName">
+        Kullanıcı
+       </div>
+       <div class="profile-stats" style="justify-content: center;">
+        <div class="profile-stat">
+         <strong id="postCount">0</strong> gönderi
+        </div>
+        <div class="profile-stat">
+         <strong id="followerCount">0</strong> takipçi
+        </div>
+        <div class="profile-stat">
+         <strong id="followingCount">0</strong> takip
+        </div>
+       </div><button class="submit-btn" id="editProfileBtn" style="margin: 16px auto 0; display: block; width: auto; padding: 10px 24px;">Profili Düzenle ✏️</button>
+      </div>
+     </div>
+     <div id="userPostsContainer"></div>
+    </div>
+   </div><!-- Explore Page -->
+   <div id="explorePage" class="page">
+    <div class="container">
+     <div id="exploreContainer"></div>
+    </div>
+   </div><!-- Market Page -->
+   <div id="marketPage" class="page">
+    <div class="container">
+     <div class="market-grid" id="marketGrid"></div>
+    </div>
+   </div><!-- Bottom Nav -->
+   <div class="bottom-nav"><button class="nav-btn active" data-page="feed">
+     <div>
+      🏠
+     </div><span>Ana Sayfa</span> </button> <button class="nav-btn" data-page="explore">
+     <div>
+      🔍
+     </div><span>Keşfet</span> </button> <button class="nav-btn" data-page="market">
+     <div>
+      🛒
+     </div><span>Pazar</span> </button> <button class="nav-btn" data-page="profile">
+     <div>
+      👤
+     </div><span>Profil</span> </button>
+   </div>
+  </div><!-- Create Post Modal -->
+  <div id="createModal" class="modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <div class="modal-title">
+      Yeni Gönderi Oluştur
+     </div><button class="close-btn" id="closeCreateModal">×</button>
+    </div>
+    <div class="modal-body">
+     <form id="createPostForm">
+      <div class="form-group">
+       <div style="display: flex; gap: 12px; margin-bottom: 16px;"><button type="button" class="submit-btn" id="uploadPostMediaBtn" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📷 Fotoğraf/Video</button>
+       </div><input type="file" id="postMediaInput" accept="image/*,video/*" multiple style="display: none;">
+       <div id="mediaPreview" style="display: none; margin-bottom: 16px;">
+        <div id="mediaGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;"></div>
+        <div id="mediaSizeWarning" style="display: none; background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px;"></div>
+       </div>
+      </div>
+      <div class="form-group"><textarea class="form-textarea" id="postCaption" placeholder="Ne düşünüyorsun? #tarım #agrolink" required></textarea>
+      </div>
+      <div class="form-group"><input type="text" class="form-input" id="postLocation" placeholder="📍 Konum ekle (isteğe bağlı)">
+      </div><button type="submit" class="submit-btn" id="submitPostBtn">Paylaş 🚀</button>
+     </form>
+    </div>
+   </div>
+  </div><!-- Comments Modal -->
+  <div id="commentsModal" class="modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <div class="modal-title">
+      Yorumlar
+     </div><button class="close-btn" id="closeCommentsModal">×</button>
+    </div>
+    <div class="modal-body" id="commentsBody"></div>
+    <div style="padding: 16px; border-top: 1px solid #dbdbdb; display: flex; gap: 12px;"><input type="text" class="comment-input" id="newCommentInput" placeholder="Yorum ekle..." style="flex: 1; padding: 12px; border: 1px solid #dbdbdb; border-radius: 24px;"> <button class="submit-btn" id="submitCommentBtn" style="width: auto; padding: 12px 24px;" disabled>Gönder</button>
+    </div>
+   </div>
+  </div><!-- Create Market Item Modal -->
+  <div id="createMarketModal" class="modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <div class="modal-title">
+      Ürün Ekle
+     </div><button class="close-btn" id="closeMarketModal">×</button>
+    </div>
+    <div class="modal-body">
+     <form id="createMarketForm">
+      <div class="form-group">
+       <div class="profile-photo-upload">
+        <div class="profile-photo-label">
+         Ürün Fotoğrafı (Sadece Fotoğraf)
+        </div>
+        <div class="profile-photo-preview" id="marketPhotoPreview" style="width: 200px; height: 200px; border-radius: 12px; margin: 0 auto;"><span id="marketPhotoPlaceholder">📷</span>
+         <div class="profile-photo-overlay">
+          📷
+         </div>
+        </div><input type="file" id="marketPhotoInput" accept="image/*" style="display: none;">
+        <div class="profile-photo-hint" id="uploadMarketPhotoBtn">
+         Fotoğraf Yükle
+        </div>
+       </div>
+      </div>
+      <div class="form-group"><input type="text" class="form-input" id="marketTitle" placeholder="Ürün adı" required>
+      </div>
+      <div class="form-group"><input type="text" class="form-input" id="marketPrice" placeholder="Fiyat (örn: ₺150)" required>
+      </div>
+      <div class="form-group"><input type="text" class="form-input" id="marketCategory" placeholder="Kategori (örn: Tohum, Ekipman)" required>
+      </div><button type="submit" class="submit-btn">Ürün Ekle 🛒</button>
+     </form>
+    </div>
+   </div>
+  </div><!-- Edit Profile Modal -->
+  <div id="editProfileModal" class="modal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <div class="modal-title">
+      Profili Düzenle
+     </div><button class="close-btn" id="closeEditProfileModal">×</button>
+    </div>
+    <div class="modal-body">
+     <form id="editProfileForm">
+      <div class="profile-photo-upload">
+       <div class="profile-photo-label">
+        Profil Fotoğrafı
+       </div>
+       <div class="profile-photo-preview" id="editProfilePhotoPreview"><span id="editProfilePhotoPlaceholder">📷</span>
+        <div class="profile-photo-overlay">
+         📷
+        </div>
+       </div><input type="file" id="editProfilePhotoInput" accept="image/*" style="display: none;">
+       <div class="profile-photo-hint" id="editUploadPhotoBtn">
+        Fotoğraf Değiştir
+       </div>
+      </div>
+      <div class="form-group"><input type="text" id="editProfileName" class="form-input" placeholder="Adınız Soyadınız" required>
+      </div>
+      <div class="form-group" style="margin-top: 24px;"><label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 16px; background: #f8f9fa; border-radius: 12px;"> <input type="checkbox" id="privateAccountCheckbox" style="width: 20px; height: 20px; cursor: pointer;">
+        <div>
+         <div style="font-weight: 600; margin-bottom: 4px;">
+          🔒 Gizli Hesap
+         </div>
+         <div style="font-size: 13px; color: #8e8e8e;">
+          Sadece takipçilerin gönderilerini görebilir
+         </div>
+        </div></label>
+      </div><button type="submit" class="submit-btn">Kaydet 💾</button>
+     </form>
+    </div>
+   </div>
+  </div><!-- Profile Photo Viewer Modal -->
+  <div id="profilePhotoViewerModal" class="modal">
+   <div class="modal-content" style="max-width: 600px; background: transparent; border: none;">
+    <div style="position: relative;"><button class="close-btn" id="closePhotoViewer" style="position: absolute; top: -40px; right: 0; background: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">×</button> <img id="profilePhotoViewerImg" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+    </div>
+   </div>
+  </div>
+  <script>
+    // ============================================
+    // 🔌 API CONFIGURATION - DEĞİŞTİRİLECEK ALAN
+    // ============================================
+    const API_BASE_URL = 'http://0.0.0.0:3000'; // BURAYA KENDİ API ADRESİNİ YAZ!
+    // Örnek: const API_BASE_URL = 'https://agrolink_api.com.tr/api';
+    // Örnek: const API_BASE_URL = 'http://localhost:3000/api';
+
+    // API Endpoints
+    const API_ENDPOINTS = {
+      // Kullanıcı işlemleri
+      register: `${API_BASE_URL}/users/register`,
+      login: `${API_BASE_URL}/users/login`,
+      getUser: (userId) => `${API_BASE_URL}/users/${userId}`,
+      
+      // Gönderi işlemleri
+      getPosts: `${API_BASE_URL}/posts`,
+      createPost: `${API_BASE_URL}/posts`,
+      likePost: (postId) => `${API_BASE_URL}/posts/${postId}/like`,
+      getUserPosts: (userId) => `${API_BASE_URL}/posts/user/${userId}`,
+      
+      // Yorum işlemleri
+      getComments: (postId) => `${API_BASE_URL}/posts/${postId}/comments`,
+      createComment: (postId) => `${API_BASE_URL}/posts/${postId}/comments`,
+      
+      // Market işlemleri
+      getMarketItems: `${API_BASE_URL}/market`,
+      createMarketItem: `${API_BASE_URL}/market`
+    };
+
+    // ============================================
+    // GLOBAL STATE
+    // ============================================
+    let currentUser = null;
+    let allPosts = [];
+    let allMarketItems = [];
+    let selectedMarketEmoji = '🌱';
+    let currentPostId = null;
+    let profilePhotoUrl = null;
+    let postMediaFiles = [];
+    let editProfilePhotoUrl = null;
+    let marketPhotoUrl = null;
+    let videoWatchTimers = new Map();
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+    let allUsers = []; // Tüm kullanıcılar
+    let followRequests = []; // Takip istekleri
+
+    // ============================================
+    // API HELPER FUNCTIONS
+    // ============================================
+    
+    // API çağrısı yapan yardımcı fonksiyon
+    async function apiCall(url, options = {}) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('API Call Error:', error);
+        showToast('⚠️ server bağlantı hatası! Lütfen ıp adresini kontrol edin.');
+        throw error;
+      }
+    }
+
+    // ============================================
+    // ELEMENT SDK
+    // ============================================
+    const defaultConfig = {
+      platform_name: 'Agrolink',
+      welcome_message: 'Tarım topluluğuna hoş geldiniz',
+      api_url: 'http://0.0.0.0:3000/api'
+    };
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          const platformName = config.platform_name || defaultConfig.platform_name;
+          const welcomeMessage = config.welcome_message || defaultConfig.welcome_message;
+          const apiUrl = config.api_url || defaultConfig.api_url;
+          
+          document.getElementById('authLogo').textContent = `🌾 ${platformName}`;
+          document.getElementById('mainLogo').textContent = `🌾 ${platformName}`;
+          document.getElementById('welcomeText').textContent = welcomeMessage;
+          document.getElementById('apiUrlDisplay').textContent = apiUrl;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['platform_name', config.platform_name || defaultConfig.platform_name],
+          ['welcome_message', config.welcome_message || defaultConfig.welcome_message],
+          ['api_url', config.api_url || defaultConfig.api_url]
+        ])
+      });
+    }
+
+    // ============================================
+    // SPLASH SCREEN
+    // ============================================
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splashScreen');
+        splash.classList.add('fade-out');
+        setTimeout(() => {
+          splash.style.display = 'none';
+          document.getElementById('authScreen').classList.add('active');
+        }, 500);
+      }, 5000);
+    });
+
+    // ============================================
+    // EMOJIS
+    // ============================================
+    const marketEmojis = ['🌾', '🌱', '🍅', '🥕', '🌽', '🥒', '🔨', '⚙️', '🪴', '💧', '🌰', '🍯', '🧺', '📦', '🚜', '⛏️'];
+
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ============================================
+    // PROFILE PHOTO UPLOAD
+    // ============================================
+    document.getElementById('uploadPhotoBtn').addEventListener('click', () => {
+      document.getElementById('profilePhotoInput').click();
+    });
+
+    document.getElementById('profilePhotoPreview').addEventListener('click', () => {
+      document.getElementById('profilePhotoInput').click();
+    });
+
+    document.getElementById('profilePhotoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Fotoğrafı 720p'ye sıkıştır
+        compressImage(file, 1280, 720).then(compressedDataUrl => {
+          profilePhotoUrl = compressedDataUrl;
+          const preview = document.getElementById('profilePhotoPreview');
+          preview.innerHTML = `
+            <img src="${profilePhotoUrl}" alt="Profile">
+            <div class="profile-photo-overlay">📷</div>
+          `;
+          showToast('Fotoğraf yüklendi! ✅');
+        });
+      }
+    });
+
+    // Fotoğraf sıkıştırma fonksiyonu
+    function compressImage(file, maxWidth, maxHeight) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth || height > maxHeight) {
+              const ratio = Math.min(maxWidth / width, maxHeight / height);
+              width = width * ratio;
+              height = height * ratio;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ============================================
+    // AUTH NAVIGATION
+    // ============================================
+    document.getElementById('showLoginBtn').addEventListener('click', () => {
+      document.getElementById('authChoice').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+    });
+
+    document.getElementById('showRegisterBtn').addEventListener('click', () => {
+      document.getElementById('authChoice').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+    });
+
+    document.getElementById('backFromLogin').addEventListener('click', () => {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('authChoice').style.display = 'grid';
+    });
+
+    document.getElementById('backFromRegister').addEventListener('click', () => {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('authChoice').style.display = 'grid';
+    });
+
+    // ============================================
+    // LOGIN - API BAĞLANTILI
+    // ============================================
+    document.getElementById('loginFormSubmit').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      
+      if (!email || !password) return;
+      
+      const btn = e.target.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Giriş yapılıyor...';
+      
+      try {
+        // API'ye giriş isteği gönder
+        const response = await apiCall(API_ENDPOINTS.login, {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        
+        if (response.success && response.user) {
+          currentUser = response.user;
+          
+          document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('mainApp').style.display = 'block';
+          document.getElementById('profileName').textContent = response.user.name;
+          
+          const profileAvatar = document.getElementById('profileAvatar');
+          if (response.user.photoUrl) {
+            profileAvatar.innerHTML = `<img src="${response.user.photoUrl}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">`;
+          } else {
+            profileAvatar.textContent = response.user.name.charAt(0).toUpperCase();
+          }
+          
+          showToast(`Hoş geldin ${response.user.name}! 🎉`);
+          loadFeed();
+        } else {
+          showToast('E-posta veya şifre hatalı! ❌');
+        }
+      } catch (error) {
+        showToast('Giriş başarısız! sunucu bağlantısını kontrol edin.');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Giriş Yap 🚀';
+    });
+
+    // ============================================
+    // REGISTER - API BAĞLANTILI
+    // ============================================
+    document.getElementById('registerFormSubmit').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      
+      if (!name || !email || !password) return;
+      
+      const btn = e.target.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kayıt yapılıyor...';
+      
+      try {
+        // API'ye kayıt isteği gönder
+        const response = await apiCall(API_ENDPOINTS.register, {
+          method: 'POST',
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            photoUrl: profilePhotoUrl || ''
+          })
+        });
+        
+        if (response.success && response.user) {
+          currentUser = response.user;
+          
+          document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('mainApp').style.display = 'block';
+          document.getElementById('profileName').textContent = name;
+          
+          const profileAvatar = document.getElementById('profileAvatar');
+          if (profilePhotoUrl) {
+            profileAvatar.innerHTML = `<img src="${profilePhotoUrl}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">`;
+          } else {
+            profileAvatar.textContent = name.charAt(0).toUpperCase();
+          }
+          
+          showToast(`Hoş geldin ${name}! 🎉`);
+          loadFeed();
+        } else {
+          showToast(response.message || 'Kayıt başarısız!');
+        }
+      } catch (error) {
+        showToast('Kayıt başarısız! API bağlantısını kontrol edin.');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Kayıt Ol 🚀';
+    });
+
+    // ============================================
+    // LOAD FEED - API'DEN GÖNDERİLERİ ÇEK
+    // ============================================
+    async function loadFeed() {
+      try {
+        const response = await apiCall(API_ENDPOINTS.getPosts);
+        allPosts = response.posts || [];
+        renderFeed();
+      } catch (error) {
+        document.getElementById('postsContainer').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">API Bağlantı Hatası</div>
+            <div class="empty-state-text">Lütfen API adresini kontrol edin: ${API_BASE_URL}</div>
+          </div>
+        `;
+      }
+    }
+
+    // ============================================
+    // RENDER FEED
+    // ============================================
+    function renderFeed() {
+      const container = document.getElementById('postsContainer');
+      
+      if (allPosts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-title">Henüz gönderi yok</div>
+            <div class="empty-state-text">İlk paylaşımı sen yap! ➕ butonuna tıkla</div>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = allPosts.map(post => {
+        const isLiked = currentUser && post.likedBy && post.likedBy.includes(currentUser.id);
+        const timeAgo = getTimeAgo(post.timestamp || Date.now());
+        
+        let mediaContent = '';
+        if (post.mediaUrl) {
+          if (post.mediaType === 'video') {
+            mediaContent = `
+              <video src="${post.mediaUrl}" data-post-id="${post.id}" class="post-video" playsinline loop></video>
+              <div class="video-play-overlay">▶️</div>
+            `;
+          } else {
+            mediaContent = `<img src="${post.mediaUrl}" alt="Post" style="width: 100%; height: 100%; object-fit: cover;">`;
+          }
+        } else {
+          mediaContent = `<div style="font-size: 80px;">${post.emoji || '🌾'}</div>`;
+        }
+        
+        return `
+          <div class="post-card">
+            <div class="post-header">
+              <div class="post-user">
+                <div class="avatar">${post.userPhotoUrl ? `<img src="${post.userPhotoUrl}" alt="${post.userName}">` : post.userName.charAt(0)}</div>
+                <div class="user-info">
+                  <div class="username">${post.userName}</div>
+                  ${post.location ? `<div class="location">📍 ${post.location}</div>` : ''}
+                </div>
+              </div>
+              ${currentUser && post.userId === currentUser.id ? `
+                <button class="icon-btn delete-post-btn" data-post-id="${post.id}" style="color: #ed4956;">🗑️</button>
+              ` : ''}
+            </div>
+            
+            <div class="post-image">
+              ${mediaContent}
+            </div>
+            
+            <div class="post-actions">
+              <button class="action-btn like-btn ${isLiked ? 'liked' : ''}" data-post-id="${post.id}">
+                ${isLiked ? '❤️' : '🤍'}
+              </button>
+              <button class="action-btn comment-btn" data-post-id="${post.id}">💬</button>
+              <button class="action-btn">📤</button>
+            </div>
+            
+            <div class="post-stats">${post.likes || 0} beğeni</div>
+            
+            <div class="post-caption">
+              <span class="caption-username">${post.userName}</span>
+              ${post.content.replace(/#(\w+)/g, '<span class="hashtag">#$1</span>')}
+            </div>
+            
+            <div class="post-time">${timeAgo}</div>
+            
+            <div class="comment-input-section">
+              <input type="text" class="comment-input" placeholder="Yorum ekle..." data-post-id="${post.id}">
+              <button class="post-btn quick-comment-btn" data-post-id="${post.id}" disabled>Paylaş</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Event listeners
+      document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', handleLike);
+      });
+      
+      document.querySelectorAll('.comment-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const postId = e.currentTarget.dataset.postId;
+          openCommentsModal(postId);
+        });
+      });
+      
+      document.querySelectorAll('.delete-post-btn').forEach(btn => {
+        btn.addEventListener('click', handleDeletePost);
+      });
+      
+      // Video izlenme takibi ve oynatma kontrolü
+      document.querySelectorAll('.post-video').forEach(video => {
+        video.addEventListener('play', handleVideoPlay);
+        video.addEventListener('pause', handleVideoPause);
+        video.addEventListener('ended', handleVideoPause);
+        
+        // Video tıklama ile oynat/durdur
+        video.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (video.paused) {
+            video.play();
+            const overlay = video.nextElementSibling;
+            if (overlay && overlay.classList.contains('video-play-overlay')) {
+              overlay.style.opacity = '0';
+            }
+          } else {
+            video.pause();
+            const overlay = video.nextElementSibling;
+            if (overlay && overlay.classList.contains('video-play-overlay')) {
+              overlay.style.opacity = '1';
+            }
+          }
+        });
+      });
+    }
+
+    // ============================================
+    // VIDEO WATCH TRACKING
+    // ============================================
+    function handleVideoPlay(e) {
+      const postId = e.target.dataset.postId;
+      const startTime = Date.now();
+      videoWatchTimers.set(postId, startTime);
+    }
+
+    async function handleVideoPause(e) {
+      const postId = e.target.dataset.postId;
+      const startTime = videoWatchTimers.get(postId);
+      
+      if (startTime) {
+        const watchTime = (Date.now() - startTime) / 1000; // saniye
+        videoWatchTimers.delete(postId);
+        
+        if (watchTime >= 3) {
+          // 3 saniyeden fazla izlendi, izlenme sayısını artır
+          try {
+            await apiCall(`${API_BASE_URL}/posts/${postId}/view`, {
+              method: 'POST',
+              body: JSON.stringify({
+                userId: currentUser?.id,
+                watchTime: watchTime
+              })
+            });
+          } catch (error) {
+            console.error('İzlenme kaydedilemedi');
+          }
+        }
+      }
+    }
+
+    // ============================================
+    // DELETE POST
+    // ============================================
+    async function handleDeletePost(e) {
+      const postId = e.currentTarget.dataset.postId;
+      
+      // Inline onay mesajı
+      const btn = e.currentTarget;
+      const originalContent = btn.innerHTML;
+      btn.innerHTML = '✓ Emin misin?';
+      btn.style.background = '#ed4956';
+      btn.style.color = 'white';
+      btn.style.padding = '8px 16px';
+      btn.style.borderRadius = '8px';
+      
+      const confirmDelete = () => {
+        deletePostConfirmed(postId);
+        cleanup();
+      };
+      
+      const cancelDelete = () => {
+        btn.innerHTML = originalContent;
+        btn.style.background = 'none';
+        btn.style.color = '#ed4956';
+        btn.style.padding = '8px';
+        btn.style.borderRadius = '8px';
+        cleanup();
+      };
+      
+      const cleanup = () => {
+        btn.removeEventListener('click', confirmDelete);
+        document.removeEventListener('click', outsideClick);
+        setTimeout(() => {
+          btn.addEventListener('click', handleDeletePost);
+        }, 100);
+      };
+      
+      const outsideClick = (event) => {
+        if (!btn.contains(event.target)) {
+          cancelDelete();
+        }
+      };
+      
+      btn.removeEventListener('click', handleDeletePost);
+      btn.addEventListener('click', confirmDelete);
+      setTimeout(() => {
+        document.addEventListener('click', outsideClick);
+      }, 100);
+    }
+
+    async function deletePostConfirmed(postId) {
+      try {
+        const response = await apiCall(`${API_BASE_URL}/posts/${postId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.success) {
+          showToast('Gönderi silindi! 🗑️');
+          loadFeed();
+        }
+      } catch (error) {
+        showToast('Gönderi silinemedi!');
+      }
+    }
+
+    // ============================================
+    // HANDLE LIKE - API BAĞLANTILI
+    // ============================================
+    async function handleLike(e) {
+      if (!currentUser) {
+        showToast('Lütfen önce giriş yapın! 🔒');
+        return;
+      }
+      
+      const postId = e.currentTarget.dataset.postId;
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      
+      try {
+        const response = await apiCall(API_ENDPOINTS.likePost(postId), {
+          method: 'POST',
+          body: JSON.stringify({ userId: currentUser.id })
+        });
+        
+        if (response.success) {
+          showToast(response.liked ? 'Beğenildi! ❤️' : 'Beğeni kaldırıldı');
+          loadFeed();
+        }
+      } catch (error) {
+        showToast('Beğeni işlemi başarısız!');
+      }
+      
+      btn.disabled = false;
+    }
+
+    // ============================================
+    // CREATE POST - API BAĞLANTILI
+    // ============================================
+    document.getElementById('createBtn').addEventListener('click', () => {
+      if (!currentUser) {
+        showToast('Lütfen önce giriş yapın! 🔒');
+        return;
+      }
+      document.getElementById('createModal').classList.add('active');
+      postMediaUrl = null;
+      postMediaType = null;
+      document.getElementById('mediaPreview').style.display = 'none';
+    });
+
+    document.getElementById('closeCreateModal').addEventListener('click', () => {
+      document.getElementById('createModal').classList.remove('active');
+      postMediaUrl = null;
+      postMediaType = null;
+    });
+
+    document.getElementById('uploadPostMediaBtn').addEventListener('click', () => {
+      document.getElementById('postMediaInput').click();
+    });
+
+    document.getElementById('postMediaInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      postMediaFiles = [];
+      let totalSize = 0;
+      const warningDiv = document.getElementById('mediaSizeWarning');
+      
+      for (const file of files) {
+        totalSize += file.size;
+        
+        if (totalSize > MAX_FILE_SIZE) {
+          warningDiv.textContent = '⚠️ Toplam dosya boyutu 100MB\'ı aşamaz!';
+          warningDiv.style.display = 'block';
+          return;
+        }
+
+        const mediaType = file.type.startsWith('video') ? 'video' : 'image';
+        
+        if (mediaType === 'image') {
+          const compressed = await compressImage(file, 1920, 1080);
+          postMediaFiles.push({ type: 'image', data: compressed, file: file });
+        } else {
+          const reader = new FileReader();
+          await new Promise((resolve) => {
+            reader.onload = (event) => {
+              postMediaFiles.push({ type: 'video', data: event.target.result, file: file });
+              resolve();
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+      }
+
+      warningDiv.style.display = 'none';
+      renderMediaPreview();
+      showToast(`${postMediaFiles.length} medya yüklendi! ✅`);
+    });
+
+    function renderMediaPreview() {
+      const preview = document.getElementById('mediaPreview');
+      const grid = document.getElementById('mediaGrid');
+      
+      if (postMediaFiles.length === 0) {
+        preview.style.display = 'none';
+        return;
+      }
+
+      preview.style.display = 'block';
+      grid.innerHTML = postMediaFiles.map((media, index) => {
+        if (media.type === 'video') {
+          return `
+            <div style="position: relative; border-radius: 8px; overflow: hidden;">
+              <video src="${media.data}" style="width: 100%; height: 150px; object-fit: cover;"></video>
+              <button type="button" onclick="removeMedia(${index})" style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px;">×</button>
+              <div style="position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px;">🎬 Video</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div style="position: relative; border-radius: 8px; overflow: hidden;">
+              <img src="${media.data}" style="width: 100%; height: 150px; object-fit: cover;">
+              <button type="button" onclick="removeMedia(${index})" style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 16px;">×</button>
+            </div>
+          `;
+        }
+      }).join('');
+    }
+
+    window.removeMedia = function(index) {
+      postMediaFiles.splice(index, 1);
+      renderMediaPreview();
+      showToast('Medya kaldırıldı');
+    };
+
+    document.getElementById('createPostForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentUser) {
+        showToast('Lütfen önce giriş yapın! 🔒');
+        return;
+      }
+      
+      const caption = document.getElementById('postCaption').value.trim();
+      const location = document.getElementById('postLocation').value.trim();
+      
+      if (!caption) return;
+      
+      const btn = document.getElementById('submitPostBtn');
+      btn.disabled = true;
+      btn.textContent = 'Paylaşılıyor...';
+      
+      try {
+        // Medya varsa ilk medyayı kullan
+        let mediaUrl = '';
+        let mediaType = '';
+        
+        if (postMediaFiles.length > 0) {
+          const firstMedia = postMediaFiles[0];
+          mediaUrl = firstMedia.data;
+          mediaType = firstMedia.type;
+        }
+        
+        const response = await apiCall(API_ENDPOINTS.createPost, {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: currentUser.id,
+            userName: currentUser.name,
+            userPhotoUrl: currentUser.photoUrl || '',
+            content: caption,
+            location: location,
+            mediaUrl: mediaUrl,
+            mediaType: mediaType
+          })
+        });
+        
+        if (response.success) {
+          document.getElementById('createModal').classList.remove('active');
+          document.getElementById('createPostForm').reset();
+          postMediaFiles = [];
+          document.getElementById('mediaPreview').style.display = 'none';
+          showToast('Gönderi paylaşıldı! 🎉');
+          loadFeed();
+        }
+      } catch (error) {
+        showToast('Gönderi paylaşılamadı!');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Paylaş 🚀';
+    });
+
+    // ============================================
+    // COMMENTS MODAL
+    // ============================================
+    async function openCommentsModal(postId) {
+      currentPostId = postId;
+      
+      try {
+        const response = await apiCall(API_ENDPOINTS.getComments(postId));
+        const comments = response.comments || [];
+        const body = document.getElementById('commentsBody');
+        
+        if (comments.length === 0) {
+          body.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">💬</div>
+              <div class="empty-state-title">Henüz yorum yok</div>
+              <div class="empty-state-text">İlk yorumu sen yap!</div>
+            </div>
+          `;
+        } else {
+          body.innerHTML = comments.map(comment => `
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+              <div class="avatar" style="width: 32px; height: 32px; font-size: 14px; flex-shrink: 0;">${comment.userAvatar || comment.userName.charAt(0)}</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${comment.userName}</div>
+                <div style="font-size: 14px; line-height: 1.4;">${comment.content}</div>
+                <div style="font-size: 12px; color: #8e8e8e; margin-top: 4px;">${getTimeAgo(comment.timestamp)}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+        
+        document.getElementById('commentsModal').classList.add('active');
+      } catch (error) {
+        showToast('Yorumlar yüklenemedi!');
+      }
+    }
+
+    document.getElementById('closeCommentsModal').addEventListener('click', () => {
+      document.getElementById('commentsModal').classList.remove('active');
+      currentPostId = null;
+    });
+
+    document.getElementById('newCommentInput').addEventListener('input', (e) => {
+      document.getElementById('submitCommentBtn').disabled = e.target.value.trim() === '';
+    });
+
+    document.getElementById('submitCommentBtn').addEventListener('click', async () => {
+      if (!currentUser || !currentPostId) return;
+      
+      const input = document.getElementById('newCommentInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      const btn = document.getElementById('submitCommentBtn');
+      btn.disabled = true;
+      btn.textContent = 'Gönderiliyor...';
+      
+      try {
+        const response = await apiCall(API_ENDPOINTS.createComment(currentPostId), {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: currentUser.id,
+            userName: currentUser.name,
+            userAvatar: currentUser.name.charAt(0).toUpperCase(),
+            content: text
+          })
+        });
+        
+        if (response.success) {
+          input.value = '';
+          showToast('Yorum eklendi! 💬');
+          openCommentsModal(currentPostId);
+        }
+      } catch (error) {
+        showToast('Yorum eklenemedi!');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Gönder';
+    });
+
+    // ============================================
+    // MARKET - API BAĞLANTILI
+    // ============================================
+    document.getElementById('notifBtn').addEventListener('click', () => {
+      if (!currentUser) {
+        showToast('Lütfen önce giriş yapın! 🔒');
+        return;
+      }
+      marketPhotoUrl = null;
+      document.getElementById('marketPhotoPreview').innerHTML = `
+        <span id="marketPhotoPlaceholder">📷</span>
+        <div class="profile-photo-overlay">📷</div>
+      `;
+      document.getElementById('createMarketModal').classList.add('active');
+    });
+
+    document.getElementById('closeMarketModal').addEventListener('click', () => {
+      document.getElementById('createMarketModal').classList.remove('active');
+    });
+
+    document.getElementById('uploadMarketPhotoBtn').addEventListener('click', () => {
+      document.getElementById('marketPhotoInput').click();
+    });
+
+    document.getElementById('marketPhotoPreview').addEventListener('click', () => {
+      document.getElementById('marketPhotoInput').click();
+    });
+
+    document.getElementById('marketPhotoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          marketPhotoUrl = event.target.result;
+          const preview = document.getElementById('marketPhotoPreview');
+          preview.innerHTML = `
+            <img src="${marketPhotoUrl}" alt="Product" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            <div class="profile-photo-overlay">📷</div>
+          `;
+          showToast('Ürün fotoğrafı yüklendi! ✅');
+        };
+        reader.readAsDataURL(file);
+      } else {
+        showToast('Lütfen sadece fotoğraf seçin! 📷');
+      }
+    });
+
+    async function loadMarket() {
+      try {
+        const response = await apiCall(API_ENDPOINTS.getMarketItems);
+        allMarketItems = response.items || [];
+        renderMarket();
+      } catch (error) {
+        document.getElementById('marketGrid').innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">API Bağlantı Hatası</div>
+            <div class="empty-state-text">Market verileri yüklenemedi</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderMarket() {
+      const container = document.getElementById('marketGrid');
+      
+      if (allMarketItems.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="empty-state-icon">🛒</div>
+            <div class="empty-state-title">Henüz ürün yok</div>
+            <div class="empty-state-text">İlk ürünü sen ekle!</div>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = allMarketItems.map(item => {
+        let imageContent = '';
+        if (item.photoUrl) {
+          imageContent = `<img src="${item.photoUrl}" alt="${item.title}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        } else {
+          imageContent = item.emoji || '🌱';
+        }
+        
+        return `
+          <div class="market-item">
+            <div class="market-item-image">${imageContent}</div>
+            <div class="market-item-info">
+              <div class="market-item-title">${item.title}</div>
+              <div class="market-item-price">${item.price}</div>
+              <div class="market-item-seller">📍 ${item.userName}</div>
+              <div style="font-size: 12px; color: #8e8e8e; margin-top: 4px;">${item.category}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('createMarketForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentUser) {
+        showToast('Lütfen önce giriş yapın! 🔒');
+        return;
+      }
+      
+      const title = document.getElementById('marketTitle').value.trim();
+      const price = document.getElementById('marketPrice').value.trim();
+      const category = document.getElementById('marketCategory').value.trim();
+      
+      if (!title || !price || !category) return;
+      
+      const btn = e.target.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Ekleniyor...';
+      
+      try {
+        const response = await apiCall(API_ENDPOINTS.createMarketItem, {
+          method: 'POST',
+          body: JSON.stringify({
+            userId: currentUser.id,
+            userName: currentUser.name,
+            title: title,
+            price: price,
+            category: category,
+            photoUrl: marketPhotoUrl || '',
+            emoji: marketPhotoUrl ? '' : '🌱'
+          })
+        });
+        
+        if (response.success) {
+          document.getElementById('createMarketModal').classList.remove('active');
+          document.getElementById('createMarketForm').reset();
+          marketPhotoUrl = null;
+          showToast('Ürün eklendi! 🛒');
+          loadMarket();
+        }
+      } catch (error) {
+        showToast('Ürün eklenemedi!');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Ürün Ekle 🛒';
+    });
+
+    // ============================================
+    // PROFILE PHOTO VIEWER
+    // ============================================
+    let profilePhotoHoldTimer = null;
+    
+    document.getElementById('profileAvatar').addEventListener('mousedown', (e) => {
+      if (!currentUser || !currentUser.photoUrl) return;
+      
+      profilePhotoHoldTimer = setTimeout(() => {
+        // Gizli hesap kontrolü - şimdilik herkese göster
+        document.getElementById('profilePhotoViewerImg').src = currentUser.photoUrl;
+        document.getElementById('profilePhotoViewerModal').classList.add('active');
+      }, 500); // 500ms basılı tutma
+    });
+    
+    document.getElementById('profileAvatar').addEventListener('mouseup', () => {
+      if (profilePhotoHoldTimer) {
+        clearTimeout(profilePhotoHoldTimer);
+        profilePhotoHoldTimer = null;
+      }
+    });
+    
+    document.getElementById('profileAvatar').addEventListener('mouseleave', () => {
+      if (profilePhotoHoldTimer) {
+        clearTimeout(profilePhotoHoldTimer);
+        profilePhotoHoldTimer = null;
+      }
+    });
+    
+    // Touch events for mobile
+    document.getElementById('profileAvatar').addEventListener('touchstart', (e) => {
+      if (!currentUser || !currentUser.photoUrl) return;
+      
+      profilePhotoHoldTimer = setTimeout(() => {
+        document.getElementById('profilePhotoViewerImg').src = currentUser.photoUrl;
+        document.getElementById('profilePhotoViewerModal').classList.add('active');
+      }, 500);
+    });
+    
+    document.getElementById('profileAvatar').addEventListener('touchend', () => {
+      if (profilePhotoHoldTimer) {
+        clearTimeout(profilePhotoHoldTimer);
+        profilePhotoHoldTimer = null;
+      }
+    });
+    
+    document.getElementById('closePhotoViewer').addEventListener('click', () => {
+      document.getElementById('profilePhotoViewerModal').classList.remove('active');
+    });
+
+    // ============================================
+    // PROFILE EDIT
+    // ============================================
+    document.getElementById('editProfileBtn').addEventListener('click', () => {
+      if (!currentUser) return;
+      
+      document.getElementById('editProfileName').value = currentUser.name;
+      document.getElementById('privateAccountCheckbox').checked = currentUser.isPrivate || false;
+      editProfilePhotoUrl = currentUser.photoUrl || null;
+      
+      const preview = document.getElementById('editProfilePhotoPreview');
+      if (editProfilePhotoUrl) {
+        preview.innerHTML = `
+          <img src="${editProfilePhotoUrl}" alt="Profile">
+          <div class="profile-photo-overlay">📷</div>
+        `;
+      } else {
+        preview.innerHTML = `
+          <span id="editProfilePhotoPlaceholder">${currentUser.name.charAt(0).toUpperCase()}</span>
+          <div class="profile-photo-overlay">📷</div>
+        `;
+      }
+      
+      document.getElementById('editProfileModal').classList.add('active');
+    });
+
+    document.getElementById('closeEditProfileModal').addEventListener('click', () => {
+      document.getElementById('editProfileModal').classList.remove('active');
+    });
+
+    document.getElementById('editUploadPhotoBtn').addEventListener('click', () => {
+      document.getElementById('editProfilePhotoInput').click();
+    });
+
+    document.getElementById('editProfilePhotoPreview').addEventListener('click', () => {
+      document.getElementById('editProfilePhotoInput').click();
+    });
+
+    document.getElementById('editProfilePhotoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          editProfilePhotoUrl = event.target.result;
+          const preview = document.getElementById('editProfilePhotoPreview');
+          preview.innerHTML = `
+            <img src="${editProfilePhotoUrl}" alt="Profile">
+            <div class="profile-photo-overlay">📷</div>
+          `;
+          showToast('Fotoğraf yüklendi! ✅');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentUser) return;
+      
+      const newName = document.getElementById('editProfileName').value.trim();
+      const isPrivate = document.getElementById('privateAccountCheckbox').checked;
+      if (!newName) return;
+      
+      const btn = e.target.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor...';
+      
+      try {
+        // Fotoğrafı 720p'ye sıkıştır
+        let finalPhotoUrl = editProfilePhotoUrl;
+        if (editProfilePhotoUrl && editProfilePhotoUrl.startsWith('data:')) {
+          const img = new Image();
+          img.src = editProfilePhotoUrl;
+          await new Promise(resolve => img.onload = resolve);
+          
+          const canvas = document.createElement('canvas');
+          const maxWidth = 1280;
+          const maxHeight = 720;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          finalPhotoUrl = canvas.toDataURL('image/jpeg', 0.8);
+        }
+        
+        // API'ye profil güncelleme isteği
+        const response = await apiCall(`${API_BASE_URL}/users/${currentUser.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: newName,
+            photoUrl: finalPhotoUrl || '',
+            isPrivate: isPrivate
+          })
+        });
+        
+        if (response.success) {
+          currentUser.name = newName;
+          currentUser.photoUrl = finalPhotoUrl;
+          currentUser.isPrivate = isPrivate;
+          
+          document.getElementById('profileName').textContent = newName;
+          const profileAvatar = document.getElementById('profileAvatar');
+          
+          if (finalPhotoUrl) {
+            profileAvatar.innerHTML = `<img src="${finalPhotoUrl}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+          } else {
+            profileAvatar.textContent = newName.charAt(0).toUpperCase();
+          }
+          
+          document.getElementById('editProfileModal').classList.remove('active');
+          showToast('Profil güncellendi! ✅');
+          loadFeed();
+        }
+      } catch (error) {
+        showToast('Profil güncellenemedi!');
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Kaydet 💾';
+    });
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const page = e.currentTarget.dataset.page;
+        
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        
+        if (page === 'feed') {
+          document.getElementById('feedPage').classList.add('active');
+          loadFeed();
+        } else if (page === 'profile') {
+          document.getElementById('profilePage').classList.add('active');
+        } else if (page === 'market') {
+          document.getElementById('marketPage').classList.add('active');
+          loadMarket();
+        } else if (page === 'explore') {
+          document.getElementById('explorePage').classList.add('active');
+          loadExplore();
+        }
+      });
+    });
+
+    // ============================================
+    // EXPLORE PAGE
+    // ============================================
+    async function loadExplore() {
+      const container = document.getElementById('exploreContainer');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div><div>İçerikler yükleniyor...</div></div>';
+      
+      try {
+        const response = await apiCall(API_ENDPOINTS.getPosts);
+        const posts = response.posts || [];
+        
+        if (posts.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🔍</div>
+              <div class="empty-state-title">Henüz içerik yok</div>
+              <div class="empty-state-text">İlk paylaşımı sen yap!</div>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = posts.map(post => {
+          let mediaContent = '';
+          if (post.mediaUrl) {
+            if (post.mediaType === 'video') {
+              mediaContent = `<video src="${post.mediaUrl}" style="width: 100%; height: 100%; object-fit: cover;"></video>`;
+            } else {
+              mediaContent = `<img src="${post.mediaUrl}" alt="Post" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+          } else {
+            mediaContent = `<div style="font-size: 60px; display: flex; align-items: center; justify-content: center; height: 100%;">${post.emoji || '🌾'}</div>`;
+          }
+          
+          return `
+            <div style="position: relative; cursor: pointer; overflow: hidden; border-radius: 8px; background: #f0f0f0;">
+              ${mediaContent}
+              <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 16px; color: white;">
+                <div style="font-weight: 600; margin-bottom: 4px;">${post.userName}</div>
+                <div style="font-size: 14px; opacity: 0.9;">${post.content.substring(0, 50)}${post.content.length > 50 ? '...' : ''}</div>
+                <div style="margin-top: 8px; font-size: 14px;">❤️ ${post.likes || 0} beğeni</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+        container.style.gap = '16px';
+        container.querySelectorAll('> div').forEach(el => {
+          el.style.aspectRatio = '1';
+        });
+        
+      } catch (error) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-title">İçerikler yüklenemedi</div>
+            <div class="empty-state-text">API bağlantısını kontrol edin</div>
+          </div>
+        `;
+      }
+    }
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    function getTimeAgo(timestamp) {
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      
+      if (seconds < 60) return 'ŞİMDİ';
+      if (seconds < 3600) return Math.floor(seconds / 60) + ' DAKİKA ÖNCE';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + ' SAAT ÖNCE';
+      if (seconds < 604800) return Math.floor(seconds / 86400) + ' GÜN ÖNCE';
+      return Math.floor(seconds / 604800) + ' HAFTA ÖNCE';
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c687bc95f8f2ed',t:'MTc2Mjc4Nzk4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
