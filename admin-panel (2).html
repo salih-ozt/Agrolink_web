@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroLink - Yönetici Paneli</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com;
+        style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com;
+        font-src 'self' https://cdnjs.cloudflare.com;
+        img-src 'self' data: https:;
+        connect-src 'self' https: wss:;
+    ">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .code-input {
+            width: 50px;
+            height: 60px;
+            font-size: 28px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        
+        .code-input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4">
+        <div class="glass-effect rounded-3xl shadow-2xl p-8 max-w-md w-full slide-in">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-shield-halved text-white text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">AgroLink Admin</h1>
+                <p class="text-gray-600">Yönetici Girişi</p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">E-posta Adresi</label>
+                <input type="email" id="adminEmail" 
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none transition"
+                       placeholder="agrolink5252@gmail.com"
+                       value="agrolink5252@gmail.com">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2 mt-4">Şifre</label>
+                <input type="password" id="adminPassword" 
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none transition"
+                       placeholder="Şifrenizi girin"
+                       onkeypress="if(event.key==='Enter') adminLogin()">
+                
+                <button onclick="adminLogin()" 
+                        class="w-full mt-6 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap
+                </button>
+            </div>
+            
+            <div id="loginMessage" class="mt-4 text-center text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="hidden min-h-screen p-6">
+        <!-- Header -->
+        <div class="glass-effect rounded-2xl p-6 mb-6 shadow-xl">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Yönetici Paneli</h1>
+                    <p class="text-gray-600">AgroLink Yönetim Sistemi</p>
+                </div>
+                <button onclick="logout()" class="bg-red-500 text-white px-6 py-2 rounded-xl hover:bg-red-600 transition">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Çıkış
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div class="stat-card glass-effect rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">Toplam Kullanıcı</span>
+                    <i class="fas fa-users text-blue-500 text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-gray-800" id="totalUsers">0</div>
+            </div>
+            
+            <div class="stat-card glass-effect rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">Aktif Kullanıcı</span>
+                    <i class="fas fa-user-check text-green-500 text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-gray-800" id="activeUsers">0</div>
+            </div>
+            
+            <div class="stat-card glass-effect rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">Toplam Post</span>
+                    <i class="fas fa-file-alt text-purple-500 text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-gray-800" id="totalPosts">0</div>
+            </div>
+            
+            <div class="stat-card glass-effect rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">Mavi Tik Başvuru</span>
+                    <i class="fas fa-certificate text-yellow-500 text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-gray-800" id="verificationRequests">0</div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="glass-effect rounded-2xl p-2 mb-6 shadow-xl">
+            <div class="flex gap-2 overflow-x-auto">
+                <button onclick="switchTab('overview')" class="tab-btn px-6 py-3 rounded-xl font-semibold transition active">
+                    <i class="fas fa-chart-line mr-2"></i>Genel Bakış
+                </button>
+                <button onclick="switchTab('users')" class="tab-btn px-6 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-users mr-2"></i>Kullanıcılar
+                </button>
+                <button onclick="switchTab('logins')" class="tab-btn px-6 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Giriş Kayıtları
+                </button>
+                <button onclick="switchTab('verifications')" class="tab-btn px-6 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-certificate mr-2"></i>Mavi Tik Başvuruları
+                </button>
+                <button onclick="switchTab('posts')" class="tab-btn px-6 py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-file-alt mr-2"></i>Postlar
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="tabContent" class="glass-effect rounded-2xl p-6 shadow-xl">
+            <!-- Content will be loaded dynamically -->
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '';
+        let adminToken = null;
+
+        // Admin Login Function
+        async function adminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (!email || !password) {
+                showMessage('❌ Lütfen e-posta ve şifre girin!', 'error');
+                return;
+            }
+
+            try {
+                showMessage('🔐 Giriş yapılıyor...', 'info');
+                
+                const response = await axios.post(`${API_URL}/api/admin/login`, {
+                    email: email,
+                    password: password
+                });
+
+                if (response.data.success) {
+                    adminToken = response.data.token;
+                    localStorage.setItem('adminToken', adminToken);
+                    
+                    showMessage('✅ Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
+                    
+                    setTimeout(() => {
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        document.getElementById('adminDashboard').classList.remove('hidden');
+                        loadDashboardData();
+                    }, 1000);
+                }
+            } catch (error) {
+                showMessage('❌ Giriş başarısız: ' + (error.response?.data?.message || error.message), 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            adminToken = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function showMessage(message, type) {
+            const msgDiv = document.getElementById('loginMessage');
+            const colors = {
+                success: 'text-green-600 bg-green-50',
+                error: 'text-red-600 bg-red-50',
+                info: 'text-blue-600 bg-blue-50'
+            };
+            
+            msgDiv.className = `mt-4 text-center text-sm p-3 rounded-lg ${colors[type]}`;
+            msgDiv.textContent = message;
+        }
+
+        // Dashboard Functions
+        async function loadDashboardData() {
+            try {
+                const response = await axios.get(`${API_URL}/api/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                const stats = response.data;
+                document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
+                document.getElementById('totalPosts').textContent = stats.totalPosts || 0;
+                document.getElementById('verificationRequests').textContent = stats.verificationRequests || 0;
+
+                switchTab('overview');
+            } catch (error) {
+                console.error('Dashboard yükleme hatası:', error);
+                if (error.response?.status === 401) {
+                    logout();
+                }
+            }
+        }
+
+        async function switchTab(tab) {
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-gradient-to-r', 'from-green-500', 'to-green-600', 'text-white');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+            });
+            
+            event.target.classList.add('active', 'bg-gradient-to-r', 'from-green-500', 'to-green-600', 'text-white');
+            event.target.classList.remove('text-gray-600', 'hover:bg-gray-100');
+
+            const content = document.getElementById('tabContent');
+            content.innerHTML = '<div class="text-center py-8"><div class="pulse-animation text-4xl mb-4">⏳</div><p class="text-gray-600">Yükleniyor...</p></div>';
+
+            try {
+                switch(tab) {
+                    case 'overview':
+                        await loadOverview();
+                        break;
+                    case 'users':
+                        await loadUsers();
+                        break;
+                    case 'logins':
+                        await loadLoginRecords();
+                        break;
+                    case 'verifications':
+                        await loadVerificationRequests();
+                        break;
+                    case 'posts':
+                        await loadPosts();
+                        break;
+                }
+            } catch (error) {
+                content.innerHTML = `<div class="text-center py-8 text-red-600">❌ Yükleme hatası: ${error.message}</div>`;
+            }
+        }
+
+        async function loadOverview() {
+            const response = await axios.get(`${API_URL}/api/admin/overview`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+
+            const data = response.data;
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">📊 Sistem Genel Bakış</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
+                        <h3 class="font-bold text-lg mb-4 text-blue-900">📈 Kullanıcı İstatistikleri</h3>
+                        <div class="space-y-2">
+                            <p><span class="font-semibold">Toplam:</span> ${data.userStats.total}</p>
+                            <p><span class="font-semibold">Aktif (30 gün):</span> ${data.userStats.active30}</p>
+                            <p><span class="font-semibold">Bugün Kayıt:</span> ${data.userStats.todayRegistered}</p>
+                            <p><span class="font-semibold">Doğrulanmış:</span> ${data.userStats.verified}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl">
+                        <h3 class="font-bold text-lg mb-4 text-purple-900">📝 İçerik İstatistikleri</h3>
+                        <div class="space-y-2">
+                            <p><span class="font-semibold">Toplam Post:</span> ${data.postStats.total}</p>
+                            <p><span class="font-semibold">Bugün:</span> ${data.postStats.today}</p>
+                            <p><span class="font-semibold">Toplam Görüntüleme:</span> ${data.postStats.totalViews}</p>
+                            <p><span class="font-semibold">Toplam Beğeni:</span> ${data.postStats.totalLikes}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl mb-6">
+                    <h3 class="font-bold text-lg mb-4 text-green-900">🌍 Coğrafi Dağılım (Top 10)</h3>
+                    <div class="space-y-2">
+                        ${data.locationStats.map((loc, i) => `
+                            <div class="flex justify-between items-center">
+                                <span>${i + 1}. ${loc.location || 'Bilinmiyor'}</span>
+                                <span class="font-semibold">${loc.count} kullanıcı</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadUsers() {
+            const response = await axios.get(`${API_URL}/api/admin/users`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+
+            const users = response.data;
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">👥 Kullanıcı Listesi (${users.length})</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">Kullanıcı Adı</th>
+                                <th class="p-3 text-left">E-posta</th>
+                                <th class="p-3 text-left">Ad Soyad</th>
+                                <th class="p-3 text-left">Durum</th>
+                                <th class="p-3 text-left">Kayıt Tarihi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${users.map(user => `
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">${user.id}</td>
+                                    <td class="p-3">
+                                        <div class="flex items-center gap-2">
+                                            ${user.username}
+                                            ${user.verified ? '<i class="fas fa-check-circle text-blue-500" title="Doğrulanmış"></i>' : ''}
+                                        </div>
+                                    </td>
+                                    <td class="p-3">${user.email}</td>
+                                    <td class="p-3">${user.fullName || '-'}</td>
+                                    <td class="p-3">
+                                        <span class="px-2 py-1 rounded-full text-xs ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                            ${user.isActive ? 'Aktif' : 'Pasif'}
+                                        </span>
+                                    </td>
+                                    <td class="p-3">${new Date(user.createdAt).toLocaleString('tr-TR')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function loadLoginRecords() {
+            const response = await axios.get(`${API_URL}/api/admin/login-records`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+
+            const records = response.data;
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">🔐 Giriş Kayıtları (Son 100)</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-3 text-left">Kullanıcı</th>
+                                <th class="p-3 text-left">E-posta</th>
+                                <th class="p-3 text-left">IP Adresi</th>
+                                <th class="p-3 text-left">Tarih</th>
+                                <th class="p-3 text-left">Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(record => `
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">${record.username}</td>
+                                    <td class="p-3">${record.email}</td>
+                                    <td class="p-3"><code class="bg-gray-100 px-2 py-1 rounded">${record.ipAddress}</code></td>
+                                    <td class="p-3">${new Date(record.loginAt).toLocaleString('tr-TR')}</td>
+                                    <td class="p-3">
+                                        <span class="px-2 py-1 rounded-full text-xs ${record.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                            ${record.success ? '✅ Başarılı' : '❌ Başarısız'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function loadVerificationRequests() {
+            const response = await axios.get(`${API_URL}/api/admin/verification-requests`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+
+            const requests = response.data;
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">✨ Mavi Tik Başvuruları (${requests.length})</h2>
+                <div class="grid gap-4">
+                    ${requests.map(req => `
+                        <div class="border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg">${req.fullName}</h3>
+                                    <p class="text-gray-600">@${req.username}</p>
+                                    <p class="text-sm text-gray-500">${req.email}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${
+                                    req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    req.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    'bg-red-100 text-red-800'
+                                }">
+                                    ${req.status === 'pending' ? '⏳ Beklemede' : req.status === 'approved' ? '✅ Onaylandı' : '❌ Reddedildi'}
+                                </span>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                                <p class="text-sm"><strong>Sebep:</strong> ${req.reason}</p>
+                            </div>
+                            <div class="text-xs text-gray-500 mb-4">
+                                Başvuru Tarihi: ${new Date(req.requestedAt).toLocaleString('tr-TR')}
+                            </div>
+                            ${req.status === 'pending' ? `
+                                <div class="flex gap-2">
+                                    <button onclick="handleVerification(${req.userId}, 'approve')" 
+                                            class="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">
+                                        <i class="fas fa-check mr-2"></i>Onayla
+                                    </button>
+                                    <button onclick="handleVerification(${req.userId}, 'reject')" 
+                                            class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition">
+                                        <i class="fas fa-times mr-2"></i>Reddet
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function handleVerification(userId, action) {
+            if (!confirm(`Bu başvuruyu ${action === 'approve' ? 'onaylamak' : 'reddetmek'} istediğinize emin misiniz?`)) {
+                return;
+            }
+
+            try {
+                await axios.post(`${API_URL}/api/admin/handle-verification`, {
+                    userId,
+                    action
+                }, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                alert(`✅ Başvuru ${action === 'approve' ? 'onaylandı' : 'reddedildi'}!`);
+                loadVerificationRequests();
+            } catch (error) {
+                alert('❌ İşlem başarısız: ' + error.message);
+            }
+        }
+
+        async function loadPosts() {
+            const response = await axios.get(`${API_URL}/api/admin/posts`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+
+            const posts = response.data;
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6">📝 Tüm Postlar (${posts.length})</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">Kullanıcı</th>
+                                <th class="p-3 text-left">İçerik</th>
+                                <th class="p-3 text-left">Görüntülenme</th>
+                                <th class="p-3 text-left">Beğeni</th>
+                                <th class="p-3 text-left">Yorum</th>
+                                <th class="p-3 text-left">Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${posts.map(post => `
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">${post.id}</td>
+                                    <td class="p-3">@${post.username}</td>
+                                    <td class="p-3 max-w-xs truncate">${post.content || '-'}</td>
+                                    <td class="p-3">${post.views || 0}</td>
+                                    <td class="p-3">${post.likes || 0}</td>
+                                    <td class="p-3">${post.comments || 0}</td>
+                                    <td class="p-3">${new Date(post.createdAt).toLocaleDateString('tr-TR')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Check if already logged in
+        window.onload = function() {
+            const token = localStorage.getItem('adminToken');
+            if (token) {
+                adminToken = token;
+                // Verify token
+                axios.get(`${API_URL}/api/admin/verify-token`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(() => {
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('adminDashboard').classList.remove('hidden');
+                    loadDashboardData();
+                }).catch(() => {
+                    localStorage.removeItem('adminToken');
+                });
+            }
+        };
+
+        // Tab button styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .tab-btn.active {
+                background: linear-gradient(to right, #10b981, #059669);
+                color: white;
+            }
+            .tab-btn:not(.active) {
+                color: #6b7280;
+            }
+            .tab-btn:not(.active):hover {
+                background: #f3f4f6;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
